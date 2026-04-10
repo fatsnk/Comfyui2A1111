@@ -44,6 +44,8 @@
 
 ```
 
+* 如果你是在pc使用，可直接下载[!releases](https://github.com/fatsnk/Comfyui2A1111/releases) 中的可执行文件，放在和你的环境变量文件.env同一个目录下运行。请先查看上面的简要说明中环境变量的配置，配置好.env文件再运行。
+
 
 > 💡 **提示**：如果是部署在 Railway 或 Render 等需要配置扁平化环境变量的云平台，可以直接参考使用 [RAILWAY_ENV_EXAMPLE.txt](RAILWAY_ENV_EXAMPLE.txt) 中提供的环境变量格式，复制粘贴之后修改配置。
 
