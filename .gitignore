@@ -1,0 +1,13 @@
+.env
+images/
+.DS_Store
+logs/*.json
+
+# Exclude comfyui-workflows json files
+comfyui-workflows/**/*.json
+
+# Exclude ref project
+参考项目/
+
+# Exclude compiled executables
+*.exe

@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日志查询系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* 背景装饰 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 毛玻璃卡片 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 登录页面样式 */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 50px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-box h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+            font-weight: 600;
+        }
+
+        /* 标签页样式 */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 5px;
+            gap: 5px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .tab-btn.active {
+            background: rgba(102, 126, 234, 0.8);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* 主界面样式 */
+        .main-container {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .header {
+            padding: 25px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            padding: 12px 24px;
+            background: rgba(52, 152, 219, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0) rotate(180deg);
+        }
+
+        .refresh-icon {
+            display: inline-block;
+            transition: transform 0.5s ease;
+        }
+
+        .refresh-btn.refreshing .refresh-icon {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .logout-btn {
+            padding: 12px 24px;
+            background: rgba(231, 76, 60, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .logout-btn:hover {
+            background: rgba(231, 76, 60, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+        }
+
+        .setting-btn {
+            padding: 12px 24px;
+            background: rgba(46, 204, 113, 0.9);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .setting-btn:hover {
+            background: rgba(46, 204, 113, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.5);
+        }
+
+        .search-box {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-input-wrapper::before {
+            content: '🔍';
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 18px 14px 50px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 18px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+            background: white;
+        }
+
+        /* 表格样式 */
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        /* ComfyUI 面板样式 */
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+
+        .workflow-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .workflow-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .workflow-meta {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .badge.configured {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .badge.unconfigured {
+            background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+        }
+
+        .workflow-actions button {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-config {
+            background: rgba(52, 152, 219, 0.1);
+            color: #2980b9;
+        }
+
+        .btn-config:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-delete {
+            background: rgba(231, 76, 60, 0.1);
+            color: #c0392b;
+        }
+
+        .btn-delete:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .config-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            display: none;
+            border: 1px solid #e9ecef;
+        }
+
+        .config-row {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .config-label {
+            width: 150px;
+            font-weight: 600;
+            color: #495057;
+            flex-shrink: 0;
+        }
+
+        .config-select {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            background: white;
+            min-width: 200px;
+        }
+
+        @media (max-width: 600px) {
+            .config-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .config-label {
+                width: 100%;
+            }
+            .config-select {
+                width: 100%;
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        thead {
+            background: rgba(102, 126, 234, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        thead th {
+            padding: 16px;
+            text-align: left;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        thead th:first-child {
+            border-top-left-radius: 20px;
+        }
+
+        thead th:last-child {
+            border-top-right-radius: 20px;
+        }
+
+        tbody tr {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.01);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        tbody td {
+            padding: 16px;
+            color: #333;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+        }
+
+        tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 20px;
+        }
+
+        tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 20px;
+        }
+
+        .log-id {
+            font-weight: 600;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .log-time {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .log-model {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .log-prompt {
+            max-width: 300px;
+            color: #444;
+            position: relative;
+        }
+
+        .prompt-preview {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .prompt-toggle {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            vertical-align: middle;
+        }
+
+        .prompt-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .prompt-full {
+            display: none;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.6;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+
+        .prompt-full.expanded {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .log-status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 25px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .status-failed {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .log-image-thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .log-image-thumbnail:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .no-image {
+            color: #999;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .pagination button {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: #667eea;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination span {
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 0 10px;
+        }
+
+        /* 图片预览模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: zoomIn 0.3s ease-out;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            color: #fff;
+            font-size: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .close-modal:hover {
+            transform: rotate(90deg) scale(1.2);
+            color: #ff6b6b;
+        }
+
+        .settings-modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .settings-modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% {
+                content: '.';
+            }
+            40% {
+                content: '..';
+            }
+            60%, 100% {
+                content: '...';
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: white;
+        }
+
+        .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .empty-state p {
+            font-size: 18px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header-actions {
+                flex-direction: row;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .refresh-btn, .logout-btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            thead th, tbody td {
+                padding: 10px;
+            }
+
+            .log-prompt {
+                max-width: 150px;
+            }
+
+            .log-image-thumbnail {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <h1>🔐 日志查询系统</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="password">管理密码</label>
+                    <input type="password" id="password" placeholder="请输入管理密码" required>
+                </div>
+                <button type="submit" class="btn">登录</button>
+                <div class="error-message" id="loginError"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主页面 -->
+    <div id="mainPage" class="main-container">
+        <div class="container">
+            <div class="header glass-card">
+                <h1>📋 图片生成日志查询</h1>
+                <div class="header-actions">
+                    <button class="refresh-btn" onclick="refreshLogs()">
+                        <span class="refresh-icon"></span>
+                        <span>刷新</span>
+                    </button>
+                    <button class="setting-btn" onclick="openSettings()">⚙️ 设置</button>
+                    <button class="logout-btn" onclick="logout()">退出登录</button>
+                </div>
+            </div>
+
+            <div class="search-box glass-card">
+                <div class="search-input-wrapper">
+                    <input type="text" id="searchInput" placeholder="搜索提示词、模型、IP地址..." onkeyup="handleSearch()">
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('comfyui')">ComfyUI 工作流管理</button>
+                <button class="tab-btn" onclick="switchTab('logs')">生成日志查询</button>
+            </div>
+
+            <!-- 日志查询标签页 -->
+            <div id="tab-logs" class="tab-content">
+                <div class="search-box glass-card">
+                    <div class="search-input-wrapper">
+                        <input type="text" id="searchInput" placeholder="搜索提示词、模型、IP地址..." onkeyup="handleSearch()">
+                    </div>
+                </div>
+                <div class="table-container glass-card">
+                    <div id="logsContent"></div>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+
+            <!-- ComfyUI 管理标签页 -->
+            <div id="tab-comfyui" class="tab-content active">
+                <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="empty-state-icon" style="margin-bottom: 10px; font-size: 40px;">📁</div>
+                    <h3 style="color: white; margin-bottom: 5px;">点击或拖拽上传 ComfyUI API 格式的工作流 JSON</h3>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 14px;">(请先在 ComfyUI 中启用开发者模式，然后使用 Save (API format) 导出)</p>
+                    <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileUpload(event)">
+                </div>
+
+                <div class="glass-card" style="padding: 20px;">
+                    <h2 style="color: white; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">已加载的工作流</h2>
+                    <div id="workflowsList">
+                        <div class="loading">加载中</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片预览模态框 -->
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="close-modal">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <!-- 设置预览模态框 -->
+    <div id="settingsModal" class="modal">
+        <div class="settings-modal-content">
+            <span class="close-modal" onclick="closeSettings()">&times;</span>
+            <h2>⚙️ 系统设置</h2>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="novelAiUrl">NovelAI 代理地址 (留空使用默认地址)</label>
+                    <input type="text" id="novelAiUrl" placeholder="例如: https://image.novelai.net/ai/generate-image">
+                </div>
+                <div class="form-group">
+                    <label for="novelAiKey">默认 NovelAI API Key</label>
+                    <input type="password" id="novelAiKey" placeholder="默认使用的Token">
+                </div>
+                <div class="form-group">
+                    <label for="novelAiA1111Path">A1111 接口安全子路径 (留空则无限制)</label>
+                    <input type="text" id="novelAiA1111Path" placeholder="例如输入 subpath，则接口变为 /subpath/sdapi/v1/txt2img">
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="novelAiA1111NoSave" style="width: auto;">
+                    <label for="novelAiA1111NoSave" style="margin-bottom: 0;">A1111请求不保存图片并直接返回(省存储及性能)</label>
+                </div>
+
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">ComfyUI 设置</h3>
+
+                <div class="form-group">
+                    <label for="comfyuiBaseUrl">ComfyUI 地址 (配置后启用相关功能)</label>
+                    <input type="text" id="comfyuiBaseUrl" placeholder="例如: http://127.0.0.1:8188">
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="comfyuiAutoRoute" style="width: auto;">
+                    <label for="comfyuiAutoRoute" style="margin-bottom: 0;">开启模型自动路由 (nai-diffusion-开头的走云端，其余尝试本地同名工作流)</label>
+                </div>
+                <div class="form-group">
+                    <label for="comfyuiDefaultRoute">关闭自动路由时的默认去向 (novelai / comfyui)</label>
+                    <select id="comfyuiDefaultRoute" class="config-select" style="width: 100%;">
+                        <option value="novelai">始终走云端 (novelai)</option>
+                        <option value="comfyui">始终走本地 (comfyui)</option>
+                    </select>
+                </div>
+
+                <button type="button" class="btn" onclick="saveSettings()">保存设置</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // API配置
+        const API_BASE = window.location.origin;
+        let currentToken = localStorage.getItem('adminToken');
+        let currentPage = 1;
+        let searchKeyword = '';
+        let workflowsData = [];
+
+        // 切换标签页
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            
+            if (tabId === 'logs' && document.getElementById('logsContent').innerHTML === '') {
+                loadLogs();
+            } else if (tabId === 'comfyui') {
+                loadWorkflows();
+            }
+        }
+
+        // 页面加载时检查登录状态
+        window.onload = function() {
+            if (currentToken) {
+                showMainPage();
+                loadWorkflows();
+            } else {
+                showLoginPage();
+            }
+        };
+
+        // 显示登录页面
+        function showLoginPage() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('mainPage').style.display = 'none';
+        }
+
+        // 显示主页面
+        function showMainPage() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainPage').style.display = 'block';
+        }
+
+        // 处理登录
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentToken = data.token;
+                    localStorage.setItem('adminToken', data.token);
+                    showMainPage();
+                    // 默认显示 ComfyUI 标签页
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.querySelector('.tab-btn[onclick="switchTab(\'comfyui\')"]').classList.add('active');
+                    document.getElementById('tab-comfyui').classList.add('active');
+                    loadWorkflows();
+                } else {
+                    errorDiv.textContent = data.message || '登录失败';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                errorDiv.textContent = '登录请求失败，请检查服务器连接';
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        // 刷新日志
+        function refreshLogs() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.classList.add('refreshing');
+            
+            currentPage = 1;
+            searchKeyword = '';
+            document.getElementById('searchInput').value = '';
+            
+            loadLogs().then(() => {
+                setTimeout(() => {
+                    btn.classList.remove('refreshing');
+                }, 500);
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('adminToken');
+            currentToken = null;
+            showLoginPage();
+        }
+
+        // 搜索处理
+        let searchTimeout;
+        function handleSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchKeyword = document.getElementById('searchInput').value;
+                currentPage = 1;
+                loadLogs();
+            }, 500);
+        }
+
+        // 加载日志
+        async function loadLogs() {
+            const logsContent = document.getElementById('logsContent');
+            logsContent.innerHTML = '<div class="loading">加载中</div>';
+
+            try {
+                const url = `${API_BASE}/api/logs?page=${currentPage}&page_size=20&keyword=${encodeURIComponent(searchKeyword)}`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayLogs(data.data, data.total, data.page, data.page_size);
+                } else {
+                    logsContent.innerHTML = `<div class="empty-state">加载失败: ${data.message}</div>`;
+                }
+            } catch (error) {
+                console.error('加载日志错误:', error);
+                logsContent.innerHTML = '<div class="empty-state">加载失败，请检查服务器连接</div>';
+            }
+            
+            return Promise.resolve();
+        }
+
+        // 显示日志列表
+        function displayLogs(logs, total, page, pageSize) {
+            const logsContent = document.getElementById('logsContent');
+
+            if (!logs || logs.length === 0) {
+                logsContent.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>暂无日志数据</p>
+                    </div>
+                `;
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>时间</th>
+                            <th>模型</th>
+                            <th>提示词</th>
+                            <th>IP地址</th>
+                            <th>状态</th>
+                            <th>图片</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            logs.forEach((log, index) => {
+                const statusClass = log.status === 'success' ? 'status-success' : 'status-failed';
+                const statusText = log.status === 'success' ? '成功' : '失败';
+                const time = new Date(log.timestamp).toLocaleString('zh-CN');
+                const imageHtml = log.image_url
+                    ? `<img src="${log.image_url}" class="log-image-thumbnail" onclick="event.stopPropagation(); openModal('${log.image_url}')" alt="生成的图片">`
+                    : '<span class="no-image">无图片</span>';
+                
+                // 判断提示词是否需要折叠（超过50个字符）
+                const needToggle = log.prompt.length > 50;
+                const shortPrompt = needToggle ? log.prompt.substring(0, 50) + '...' : log.prompt;
+                const promptId = `prompt-${index}`;
+                
+                const promptHtml = needToggle
+                    ? `
+                        <div class="log-prompt">
+                            <span class="prompt-preview" id="${promptId}-preview">${shortPrompt}</span>
+                            <span class="prompt-toggle" onclick="togglePrompt('${promptId}')">展开</span>
+                            <div class="prompt-full" id="${promptId}-full">${log.prompt}</div>
+                        </div>
+                      `
+                    : `<span class="log-prompt">${log.prompt}</span>`;
+
+                html += `
+                    <tr>
+                        <td><span class="log-id">${log.id}</span></td>
+                        <td><span class="log-time">${time}</span></td>
+                        <td><span class="log-model">${log.model}</span></td>
+                        <td>${promptHtml}</td>
+                        <td>${log.user_ip || '未记录'}</td>
+                        <td><span class="log-status ${statusClass}">${statusText}</span></td>
+                        <td>${imageHtml}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            logsContent.innerHTML = html;
+
+            // 更新分页
+            updatePagination(total, page, pageSize);
+        }
+
+        // 更新分页
+        function updatePagination(total, page, pageSize) {
+            const totalPages = Math.ceil(total / pageSize);
+            const pagination = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <button onclick="changePage(${page - 1})" ${page === 1 ? 'disabled' : ''}>上一页</button>
+                <span>第 ${page} / ${totalPages} 页 (共 ${total} 条)</span>
+                <button onclick="changePage(${page + 1})" ${page === totalPages ? 'disabled' : ''}>下一页</button>
+            `;
+
+            pagination.innerHTML = html;
+        }
+
+        // 切换页码
+        function changePage(page) {
+            currentPage = page;
+            loadLogs();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 切换提示词展开/折叠
+        function togglePrompt(promptId) {
+            const preview = document.getElementById(`${promptId}-preview`);
+            const full = document.getElementById(`${promptId}-full`);
+            const toggle = event.target;
+            
+            if (full.classList.contains('expanded')) {
+                // 折叠
+                full.classList.remove('expanded');
+                preview.style.display = 'inline-block';
+                toggle.textContent = '展开';
+            } else {
+                // 展开
+                full.classList.add('expanded');
+                preview.style.display = 'none';
+                toggle.textContent = '折叠';
+            }
+        }
+
+        // 打开图片预览
+        function openModal(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'flex';
+            modalImg.src = imageUrl;
+        }
+
+        // 关闭图片预览
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        // 打开设置
+        async function openSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = 'flex';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/config`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('novelAiUrl').value = data.data.novel_ai_base_url || '';
+                    document.getElementById('novelAiKey').value = data.data.novel_ai_key || '';
+                    document.getElementById('novelAiA1111Path').value = data.data.novel_ai_a1111_path || '';
+                    document.getElementById('novelAiA1111NoSave').checked = data.data.novel_ai_a1111_no_save || false;
+                    document.getElementById('comfyuiBaseUrl').value = data.data.comfyui_base_url || '';
+                    document.getElementById('comfyuiAutoRoute').checked = data.data.comfyui_auto_route || false;
+                    document.getElementById('comfyuiDefaultRoute').value = data.data.comfyui_default_route || 'novelai';
+                }
+            } catch (error) {
+                console.error('获取配置失败:', error);
+            }
+        }
+
+        // 关闭设置
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        // 保存设置
+        async function saveSettings() {
+            const url = document.getElementById('novelAiUrl').value;
+            const key = document.getElementById('novelAiKey').value;
+            const path = document.getElementById('novelAiA1111Path').value;
+            const noSave = document.getElementById('novelAiA1111NoSave').checked;
+            const comfyuiUrl = document.getElementById('comfyuiBaseUrl').value;
+            const comfyuiAutoRoute = document.getElementById('comfyuiAutoRoute').checked;
+            const comfyuiDefaultRoute = document.getElementById('comfyuiDefaultRoute').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/config`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({
+                        novel_ai_base_url: url,
+                        novel_ai_key: key,
+                        novel_ai_a1111_path: path,
+                        novel_ai_a1111_no_save: noSave,
+                        comfyui_base_url: comfyuiUrl,
+                        comfyui_auto_route: comfyuiAutoRoute,
+                        comfyui_default_route: comfyuiDefaultRoute
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('设置保存成功');
+                    closeSettings();
+                } else {
+                    alert('保存失败: ' + (data.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('保存配置错误:', error);
+                alert('保存失败，请检查网络');
+            }
+        }
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeSettings();
+            }
+        });
+
+        // ================= ComfyUI 工作流管理 =================
+
+        async function loadWorkflows() {
+            const list = document.getElementById('workflowsList');
+            list.innerHTML = '<div class="loading">加载中</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    workflowsData = data.data || [];
+                    renderWorkflows();
+                } else {
+                    list.innerHTML = `<div class="empty-state">加载失败: ${data.message}</div>`;
+                }
+            } catch (error) {
+                list.innerHTML = '<div class="empty-state">加载失败，请检查网络</div>';
+            }
+        }
+
+        function renderWorkflows() {
+            const list = document.getElementById('workflowsList');
+            if (workflowsData.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state" style="padding: 40px 20px;">
+                        <p>暂无工作流，请上传 .json 文件</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            workflowsData.forEach((wf, idx) => {
+                const date = new Date(wf.mod_time).toLocaleString();
+                const size = (wf.size / 1024).toFixed(2) + ' KB';
+                const statusBadge = wf.has_params
+                    ? `<span class="badge configured">已配置参数</span>`
+                    : `<span class="badge unconfigured">使用自动识别</span>`;
+                
+                html += `
+                    <div class="workflow-card">
+                        <div class="workflow-info">
+                            <h3>${wf.name}</h3>
+                            <div class="workflow-meta">
+                                <span>类型: ${wf.kind}</span>
+                                <span>大小: ${size}</span>
+                                <span>更新时间: ${date}</span>
+                                ${statusBadge}
+                            </div>
+                            
+                            <div class="config-panel" id="config-${idx}">
+                                <div style="text-align: center; padding: 20px;">加载节点中...</div>
+                            </div>
+                        </div>
+                        <div class="workflow-actions">
+                            <button class="btn-config" onclick="toggleConfig(${idx}, '${wf.name}')">参数配置</button>
+                            <button class="btn-delete" onclick="deleteWorkflow('${wf.name}')">删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${currentToken}` },
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('上传成功');
+                    loadWorkflows();
+                } else {
+                    alert('上传失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('上传出错，请检查网络');
+            }
+            event.target.value = ''; // Reset
+        }
+
+        // 拖拽上传支持
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#667eea';
+            dropZone.style.background = 'rgba(255, 255, 255, 0.3)';
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            dropZone.style.background = 'rgba(255, 255, 255, 0.1)';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            dropZone.style.background = 'rgba(255, 255, 255, 0.1)';
+            
+            if (e.dataTransfer.files.length) {
+                const fileInput = document.getElementById('fileInput');
+                fileInput.files = e.dataTransfer.files;
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+
+        async function deleteWorkflow(name) {
+            if (!confirm(`确定要删除工作流 ${name} 吗？`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows/delete?name=${encodeURIComponent(name)}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadWorkflows();
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('删除出错');
+            }
+        }
+
+        async function toggleConfig(idx, name) {
+            const panel = document.getElementById(`config-${idx}`);
+            if (panel.style.display === 'block') {
+                panel.style.display = 'none';
+                return;
+            }
+            
+            panel.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows/targets?name=${encodeURIComponent(name)}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderConfigPanel(idx, name, data.data);
+                } else {
+                    panel.innerHTML = `<div style="color: red; padding: 10px;">获取节点失败: ${data.message}</div>`;
+                }
+            } catch (error) {
+                panel.innerHTML = `<div style="color: red; padding: 10px;">获取节点失败，请检查网络</div>`;
+            }
+        }
+
+        function renderConfigPanel(idx, name, targets) {
+            const panel = document.getElementById(`config-${idx}`);
+            const wf = workflowsData[idx];
+            const savedParams = wf.params || {};
+
+            const createSelect = (label, key, targetData, savedValue) => {
+                let options = `<option value="">-- 自动识别或留空 --</option>`;
+                
+                let autoValue = "";
+                if (targetData.autodetect) {
+                    autoValue = `${targetData.autodetect.node_id}.${targetData.autodetect.input_key}`;
+                    options += `<option value="${autoValue}" disabled>-- 推荐: [${targetData.autodetect.node_id}] ${targetData.autodetect.title || targetData.autodetect.class_type} -> ${targetData.autodetect.input_key} --</option>`;
+                }
+
+                if (targetData.candidates) {
+                    targetData.candidates.forEach(c => {
+                        const val = `${c.node_id}.${c.input_key}`;
+                        const selected = savedValue === val ? 'selected' : '';
+                        options += `<option value="${val}" ${selected}>[${c.node_id}] ${c.title || c.class_type} -> ${c.input_key}</option>`;
+                    });
+                }
+
+                return `
+                    <div class="config-row">
+                        <div class="config-label">${label}节点</div>
+                        <select class="config-select" id="cfg-${idx}-${key}">
+                            ${options}
+                        </select>
+                    </div>
+                `;
+            };
+
+            let html = `
+                <div style="margin-bottom: 15px; font-size: 13px; color: #666;">
+                    请为 API 请求字段映射对应的工作流节点。留空则使用内置的启发式自动识别。
+                </div>
+                ${createSelect('正面提示词 (prompt)', 'prompt_node', targets.positive_prompt, savedParams.prompt_node)}
+                ${createSelect('负面提示词 (negative)', 'negative_prompt_node', targets.negative_prompt, savedParams.negative_prompt_node)}
+                ${createSelect('输入图片 (image)', 'image_node', targets.image, savedParams.image_node)}
+                ${createSelect('宽度 (width)', 'width_node', targets.width, savedParams.width_node)}
+                ${createSelect('高度 (height)', 'height_node', targets.height, savedParams.height_node)}
+                ${createSelect('步数 (steps)', 'steps_node', targets.steps, savedParams.steps_node)}
+                ${createSelect('种子 (seed)', 'seed_node', targets.seed, savedParams.seed_node)}
+                ${createSelect('引导系数 (cfg)', 'cfg_node', targets.cfg, savedParams.cfg_node)}
+                ${createSelect('采样器 (sampler)', 'sampler_node', targets.sampler, savedParams.sampler_node)}
+                ${createSelect('调度器 (scheduler)', 'scheduler_node', targets.scheduler, savedParams.scheduler_node)}
+                
+                <div style="text-align: right; margin-top: 15px;">
+                    <button class="btn" style="width: auto; padding: 8px 24px; border-radius: 8px;" onclick="saveConfig(${idx}, '${name}')">保存映射配置</button>
+                </div>
+            `;
+            
+            panel.innerHTML = html;
+        }
+
+        async function saveConfig(idx, name) {
+            const getVal = key => document.getElementById(`cfg-${idx}-${key}`).value;
+            
+            const params = {
+                prompt_node: getVal('prompt_node'),
+                negative_prompt_node: getVal('negative_prompt_node'),
+                image_node: getVal('image_node'),
+                width_node: getVal('width_node'),
+                height_node: getVal('height_node'),
+                steps_node: getVal('steps_node'),
+                seed_node: getVal('seed_node'),
+                cfg_node: getVal('cfg_node'),
+                sampler_node: getVal('sampler_node'),
+                scheduler_node: getVal('scheduler_node'),
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows/params`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({ name, params })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('配置已保存');
+                    loadWorkflows(); // 重新加载以更新状态标签
+                } else {
+                    alert('保存失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('保存出错，请检查网络');
+            }
+        }
+    </script>
+</body>
+</html>
