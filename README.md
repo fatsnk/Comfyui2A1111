@@ -3,7 +3,6 @@
 *参考项目：https://github.com/Einzieg/Comfyui2api -MIT、https://github.com/xiaopalu-max/novel-api-go?tab=readme-ov-file#-%E8%AE%B8%E5%8F%AF%E8%AF%81 -MIT*
 
 基于 Go 语言开发的 AI 图像生成 API 服务，支持 NovelAI Diffusion 模型（v3 和 v4）、comfyui，
-
 支持将本地 ComfyUI 工作流和云服务商NovelAI的 Diffusion模型api包装为标准的 OpenAI 图像生成接口Dall-E（`/v1/images/generations`） 和聊天补全接口 （`/v1/chat/completions`）以及 stable diffusion webui A1111 兼容接口。提供直观的 Web UI 用于上传工作流 JSON、自动识别并映射提示词/参数节点，支持在 NovelAI 和本地 ComfyUI 之间智能路由请求。
 
 ```
@@ -44,7 +43,7 @@
 
 ```
 
-* 如果你是在pc使用，可直接下载[!releases](https://github.com/fatsnk/Comfyui2A1111/releases) 中的可执行文件，放在和你的环境变量文件.env同一个目录下运行。请先查看上面的简要说明中环境变量的配置，配置好.env文件再运行。
+* 如果你是在pc使用，可直接下载[releases](https://github.com/fatsnk/Comfyui2A1111/releases) 中的可执行文件，放在和你的环境变量文件.env同一个目录下运行。请先查看上面的简要说明中环境变量的配置，配置好.env文件再运行。
 
 
 > 💡 **提示**：如果是部署在 Railway 或 Render 等需要配置扁平化环境变量的云平台，可以直接参考使用 [RAILWAY_ENV_EXAMPLE.txt](RAILWAY_ENV_EXAMPLE.txt) 中提供的环境变量格式，复制粘贴之后修改配置。
@@ -361,7 +360,7 @@ GET  /logs                   # 日志查询页面
 - `parameters.steps`：生成步数（1-50）
 - `parameters.n_samples`：生成图像数量
 
-## 🚀 部署指南
+## 部署指南
 
 ### 本地开发部署
 ```bash
@@ -390,3 +389,14 @@ COPY --from=builder /app/logs ./logs
 CMD ["./novel-api-server"]
 ```
 
+## 接入其它项目
+
+通过使用本项目，便可以将comfyui和novelAI的模型接入到one-api等api聚合平台、rikkahub/kelivo/chatbox/sillytavern等AI聊天对话平台直接使用。
+
+### 接入forksilly
+
+本项目是安卓AIRP平台 [forksilly](https://github.com/fatsnk/forksilly.doc/blob/main/README.zh-CN.md) 的配套项目，有兴趣可下载试用一下。
+
+## License
+
+MIT。
