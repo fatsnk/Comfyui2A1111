@@ -13,7 +13,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e1e2f 100%);
+            color: #e2e8f0;
             min-height: 100vh;
             padding: 20px;
             position: relative;
@@ -27,10 +28,30 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
             pointer-events: none;
+        }
+
+        /* 自定义滚动条（夜间模式） */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 30, 40, 0.5);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a6a;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
         }
 
         .container {
@@ -42,12 +63,12 @@
 
         /* 毛玻璃卡片 */
         .glass-card {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(30, 30, 40, 0.4);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         /* 登录页面样式 */
@@ -59,11 +80,11 @@
         }
 
         .login-box {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(30, 30, 40, 0.95);
             backdrop-filter: blur(10px);
             padding: 50px;
             border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             width: 100%;
             max-width: 420px;
             animation: slideUp 0.5s ease-out;
@@ -82,7 +103,7 @@
 
         .login-box h1 {
             text-align: center;
-            color: #333;
+            color: #eee;
             margin-bottom: 40px;
             font-size: 32px;
             font-weight: 700;
@@ -95,7 +116,7 @@
         .form-group label {
             display: block;
             margin-bottom: 10px;
-            color: #555;
+            color: #aaa;
             font-weight: 600;
             font-size: 14px;
         }
@@ -103,17 +124,18 @@
         .form-group input {
             width: 100%;
             padding: 14px 18px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #444;
             border-radius: 16px;
             font-size: 16px;
             transition: all 0.3s;
-            background: white;
+            background: #2a2a35;
+            color: #fff;
         }
 
         .form-group input:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
         }
 
         .btn {
@@ -151,7 +173,7 @@
         .tabs {
             display: flex;
             margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(20px);
             border-radius: 16px;
             padding: 5px;
@@ -331,19 +353,20 @@
         .search-box input {
             width: 100%;
             padding: 14px 18px 14px 50px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 18px;
             font-size: 16px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(30, 30, 40, 0.8);
+            color: #eee;
             backdrop-filter: blur(10px);
             transition: all 0.3s;
         }
 
         .search-box input:focus {
             outline: none;
-            border-color: rgba(255, 255, 255, 0.6);
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
-            background: white;
+            border-color: rgba(102, 126, 234, 0.6);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+            background: rgba(30, 30, 40, 1);
         }
 
         /* 表格样式 */
@@ -370,24 +393,24 @@
         }
 
         .workflow-card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(40, 40, 50, 0.9);
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
 
         .workflow-info h3 {
-            color: #333;
+            color: #eee;
             margin-bottom: 5px;
         }
 
         .workflow-meta {
             font-size: 13px;
-            color: #666;
+            color: #aaa;
             display: flex;
             gap: 15px;
         }
@@ -439,12 +462,12 @@
         }
 
         .config-panel {
-            background: #f8f9fa;
+            background: #2a2a35;
             border-radius: 12px;
             padding: 20px;
             margin-top: 15px;
             display: none;
-            border: 1px solid #e9ecef;
+            border: 1px solid #444;
         }
 
         .config-row {
@@ -458,7 +481,7 @@
         .config-label {
             width: 150px;
             font-weight: 600;
-            color: #495057;
+            color: #ccc;
             flex-shrink: 0;
         }
 
@@ -466,8 +489,9 @@
             flex: 1;
             padding: 10px;
             border-radius: 8px;
-            border: 1px solid #ced4da;
-            background: white;
+            border: 1px solid #555;
+            background: #333;
+            color: white;
             min-width: 200px;
         }
 
@@ -490,12 +514,13 @@
             margin-bottom: 15px;
         }
         .provider-item {
-            background: #fff;
-            border: 1px solid #e0e0e0;
+            background: #2c2c38;
+            border: 1px solid #444;
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 15px;
             position: relative;
+            color: #ddd;
         }
         .provider-header {
             display: flex;
@@ -503,11 +528,11 @@
             align-items: center;
             margin-bottom: 10px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #444;
         }
         .provider-header h4 {
             margin: 0;
-            color: #333;
+            color: #eee;
             font-size: 16px;
         }
         .btn-remove-provider {
@@ -530,14 +555,16 @@
         .key-item input {
             flex: 1;
             padding: 8px 12px;
-            border: 1px solid #ddd;
+            border: 1px solid #555;
+            background: #333;
+            color: #fff;
             border-radius: 8px;
             font-size: 14px;
         }
         .btn-remove-key {
-            background: #f1f2f6;
+            background: #3a3a4a;
             color: #ff4757;
-            border: 1px solid #ddd;
+            border: 1px solid #555;
             padding: 0 12px;
             border-radius: 8px;
             cursor: pointer;
@@ -573,7 +600,7 @@
         }
 
         thead {
-            background: rgba(102, 126, 234, 0.8);
+            background: rgba(40, 45, 60, 0.8);
             backdrop-filter: blur(10px);
         }
 
@@ -597,21 +624,21 @@
         }
 
         tbody tr {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(30, 30, 40, 0.9);
             backdrop-filter: blur(10px);
             transition: all 0.3s;
         }
 
         tbody tr:hover {
-            background: rgba(255, 255, 255, 1);
+            background: rgba(45, 45, 60, 1);
             transform: scale(1.01);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         tbody td {
             padding: 16px;
-            color: #333;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            color: #e0e0e0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             font-size: 14px;
         }
 
@@ -625,13 +652,13 @@
 
         .log-id {
             font-weight: 600;
-            color: #667eea;
+            color: #8899fa;
             font-family: 'Courier New', monospace;
             font-size: 12px;
         }
 
         .log-time {
-            color: #666;
+            color: #aaa;
             font-size: 13px;
         }
 
@@ -647,7 +674,7 @@
 
         .log-prompt {
             max-width: 300px;
-            color: #444;
+            color: #ccc;
             position: relative;
         }
 
@@ -684,7 +711,7 @@
             word-break: break-word;
             line-height: 1.6;
             padding: 10px;
-            background: rgba(102, 126, 234, 0.05);
+            background: rgba(102, 126, 234, 0.15);
             border-radius: 12px;
             margin-top: 8px;
         }
@@ -756,10 +783,10 @@
 
         .pagination button {
             padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(40, 40, 50, 0.9);
             backdrop-filter: blur(10px);
-            color: #667eea;
-            border: 2px solid rgba(102, 126, 234, 0.3);
+            color: #8899fa;
+            border: 2px solid rgba(102, 126, 234, 0.5);
             border-radius: 16px;
             cursor: pointer;
             font-size: 14px;
@@ -840,7 +867,7 @@
         }
 
         .settings-modal-content {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(30, 30, 40, 0.95);
             padding: 40px;
             border-radius: 20px;
             width: 90%;
@@ -848,11 +875,12 @@
             position: relative;
             max-height: 90vh;
             overflow-y: auto;
+            color: #eee;
         }
 
         .settings-modal-content h2 {
             margin-bottom: 20px;
-            color: #333;
+            color: #eee;
         }
 
         .loading {
@@ -956,7 +984,7 @@
             <form id="loginForm">
                 <div class="form-group">
                     <label for="password">管理密码</label>
-                    <input type="password" id="password" placeholder="请输入管理密码" required>
+                    <input type="password" id="password" placeholder="请输入管理密码" required autocomplete="current-password">
                 </div>
                 <button type="submit" class="btn">登录</button>
                 <div class="error-message" id="loginError"></div>
@@ -1028,25 +1056,25 @@
             <span class="close-modal" onclick="closeSettings()">&times;</span>
             <h2>⚙️ 系统设置</h2>
             <form id="settingsForm">
-                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">NovelAI 默认配置</h3>
+                <h3 style="margin-bottom: 15px; color: #ccc; font-size: 16px;">NovelAI 默认配置</h3>
                 <div class="form-group">
                     <label for="novelAiUrl">默认代理地址 (留空使用官方地址)</label>
                     <input type="text" id="novelAiUrl" placeholder="例如: https://image.novelai.net/ai/generate-image">
                 </div>
                 <div class="form-group">
                     <label for="novelAiKey">默认 API Key</label>
-                    <input type="password" id="novelAiKey" placeholder="默认使用的Token">
+                    <input type="password" id="novelAiKey" placeholder="默认使用的Token" autocomplete="new-password">
                 </div>
                 
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">多 Provider 配置 (用于负载均衡和路由)</h3>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #444;">
+                <h3 style="margin-bottom: 15px; color: #ccc; font-size: 16px;">多 Provider 配置 (用于负载均衡和路由)</h3>
                 <div id="providerList" class="provider-list">
                     <!-- Provider 列表将通过 JS 动态生成 -->
                 </div>
                 <button type="button" class="btn-add-provider" onclick="addProvider()">+ 添加 Provider</button>
 
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">A1111 接口设置</h3>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #444;">
+                <h3 style="margin-bottom: 15px; color: #ccc; font-size: 16px;">A1111 接口设置</h3>
                 <div class="form-group">
                     <label for="novelAiA1111Path">安全子路径 (留空则无限制)</label>
                     <input type="text" id="novelAiA1111Path" placeholder="例如输入 subpath，则接口变为 /subpath/sdapi/v1/txt2img">
@@ -1056,8 +1084,8 @@
                     <label for="novelAiA1111NoSave" style="margin-bottom: 0;">A1111请求不保存图片并直接返回(省存储及性能)</label>
                 </div>
 
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">ComfyUI 设置</h3>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #444;">
+                <h3 style="margin-bottom: 15px; color: #ccc; font-size: 16px;">ComfyUI 设置</h3>
 
                 <div class="form-group">
                     <label for="comfyuiBaseUrl">ComfyUI 地址 (配置后启用相关功能)</label>
@@ -1390,12 +1418,12 @@
                 
                 providerDiv.innerHTML = `
                     <div class="provider-header">
-                        <h4>Provider: <input type="text" value="${provider.name}" placeholder="提供者名称 (如 provider1)" style="border:none; border-bottom:1px solid #ccc; background:transparent; font-weight:bold; width:150px;" onchange="updateProviderName(${pIndex}, this.value)"></h4>
+                        <h4>Provider: <input type="text" value="${provider.name}" placeholder="提供者名称 (如 provider1)" style="border:none; border-bottom:1px solid #555; background:transparent; color:#eee; font-weight:bold; width:150px;" onchange="updateProviderName(${pIndex}, this.value)"></h4>
                         <button type="button" class="btn-remove-provider" onclick="removeProvider(${pIndex})">删除</button>
                     </div>
                     <div class="form-group" style="margin-bottom: 10px;">
                         <label style="font-size: 12px;">Base URL (留空使用默认)</label>
-                        <input type="text" value="${provider.base_url || ''}" placeholder="https://..." style="padding: 8px; font-size: 13px;" onchange="updateProviderUrl(${pIndex}, this.value)">
+                        <input type="text" value="${provider.base_url || ''}" placeholder="https://..." style="padding: 8px; font-size: 13px; background: #333; border: 1px solid #555; color: #fff;" onchange="updateProviderUrl(${pIndex}, this.value)">
                     </div>
                     <div class="key-list">
                         <label style="font-size: 12px; display:block; margin-bottom:5px;">API Keys (负载均衡池)</label>
@@ -1725,7 +1753,7 @@
             };
 
             let html = `
-                <div style="margin-bottom: 15px; font-size: 13px; color: #666;">
+                <div style="margin-bottom: 15px; font-size: 13px; color: #aaa;">
                     请为 API 请求字段映射对应的工作流节点。留空则使用内置的启发式自动识别。
                 </div>
                 ${createSelect('正面提示词 (prompt)', 'prompt_node', targets.positive_prompt, savedParams.prompt_node)}
