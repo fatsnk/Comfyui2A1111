@@ -485,6 +485,87 @@
             }
         }
 
+        /* Provider 设置样式 */
+        .provider-list {
+            margin-bottom: 15px;
+        }
+        .provider-item {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .provider-header h4 {
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .btn-remove-provider {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .key-list {
+            margin-top: 10px;
+        }
+        .key-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .key-item input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .btn-remove-key {
+            background: #f1f2f6;
+            color: #ff4757;
+            border: 1px solid #ddd;
+            padding: 0 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-add-key {
+            background: #eccc68;
+            color: #2f3542;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .btn-add-provider {
+            background: #7bed9f;
+            color: #2f3542;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
         table {
             width: 100%;
             border-collapse: separate;
@@ -898,12 +979,6 @@
                 </div>
             </div>
 
-            <div class="search-box glass-card">
-                <div class="search-input-wrapper">
-                    <input type="text" id="searchInput" placeholder="搜索提示词、模型、IP地址..." onkeyup="handleSearch()">
-                </div>
-            </div>
-
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('comfyui')">ComfyUI 工作流管理</button>
                 <button class="tab-btn" onclick="switchTab('logs')">生成日志查询</button>
@@ -953,16 +1028,27 @@
             <span class="close-modal" onclick="closeSettings()">&times;</span>
             <h2>⚙️ 系统设置</h2>
             <form id="settingsForm">
+                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">NovelAI 默认配置</h3>
                 <div class="form-group">
-                    <label for="novelAiUrl">NovelAI 代理地址 (留空使用默认地址)</label>
+                    <label for="novelAiUrl">默认代理地址 (留空使用官方地址)</label>
                     <input type="text" id="novelAiUrl" placeholder="例如: https://image.novelai.net/ai/generate-image">
                 </div>
                 <div class="form-group">
-                    <label for="novelAiKey">默认 NovelAI API Key</label>
+                    <label for="novelAiKey">默认 API Key</label>
                     <input type="password" id="novelAiKey" placeholder="默认使用的Token">
                 </div>
+                
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">多 Provider 配置 (用于负载均衡和路由)</h3>
+                <div id="providerList" class="provider-list">
+                    <!-- Provider 列表将通过 JS 动态生成 -->
+                </div>
+                <button type="button" class="btn-add-provider" onclick="addProvider()">+ 添加 Provider</button>
+
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <h3 style="margin-bottom: 15px; color: #555; font-size: 16px;">A1111 接口设置</h3>
                 <div class="form-group">
-                    <label for="novelAiA1111Path">A1111 接口安全子路径 (留空则无限制)</label>
+                    <label for="novelAiA1111Path">安全子路径 (留空则无限制)</label>
                     <input type="text" id="novelAiA1111Path" placeholder="例如输入 subpath，则接口变为 /subpath/sdapi/v1/txt2img">
                 </div>
                 <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
@@ -1001,6 +1087,7 @@
         let currentPage = 1;
         let searchKeyword = '';
         let workflowsData = [];
+        let providersData = [];
 
         // 切换标签页
         function switchTab(tabId) {
@@ -1280,6 +1367,79 @@
             document.getElementById('imageModal').style.display = 'none';
         }
 
+        // 渲染 Provider 列表
+        function renderProviders() {
+            const container = document.getElementById('providerList');
+            container.innerHTML = '';
+            
+            providersData.forEach((provider, pIndex) => {
+                const providerDiv = document.createElement('div');
+                providerDiv.className = 'provider-item';
+                
+                let keysHtml = '';
+                if (provider.keys && provider.keys.length > 0) {
+                    provider.keys.forEach((key, kIndex) => {
+                        keysHtml += `
+                            <div class="key-item">
+                                <input type="password" value="${key}" placeholder="API Key" onchange="updateKey(${pIndex}, ${kIndex}, this.value)">
+                                <button type="button" class="btn-remove-key" onclick="removeKey(${pIndex}, ${kIndex})">×</button>
+                            </div>
+                        `;
+                    });
+                }
+                
+                providerDiv.innerHTML = `
+                    <div class="provider-header">
+                        <h4>Provider: <input type="text" value="${provider.name}" placeholder="提供者名称 (如 provider1)" style="border:none; border-bottom:1px solid #ccc; background:transparent; font-weight:bold; width:150px;" onchange="updateProviderName(${pIndex}, this.value)"></h4>
+                        <button type="button" class="btn-remove-provider" onclick="removeProvider(${pIndex})">删除</button>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label style="font-size: 12px;">Base URL (留空使用默认)</label>
+                        <input type="text" value="${provider.base_url || ''}" placeholder="https://..." style="padding: 8px; font-size: 13px;" onchange="updateProviderUrl(${pIndex}, this.value)">
+                    </div>
+                    <div class="key-list">
+                        <label style="font-size: 12px; display:block; margin-bottom:5px;">API Keys (负载均衡池)</label>
+                        ${keysHtml}
+                        <button type="button" class="btn-add-key" onclick="addKey(${pIndex})">+ 添加 Key</button>
+                    </div>
+                `;
+                container.appendChild(providerDiv);
+            });
+        }
+
+        function addProvider() {
+            providersData.push({ name: `provider${providersData.length + 1}`, base_url: '', keys: [''] });
+            renderProviders();
+        }
+
+        function removeProvider(index) {
+            providersData.splice(index, 1);
+            renderProviders();
+        }
+
+        function updateProviderName(index, value) {
+            providersData[index].name = value;
+        }
+
+        function updateProviderUrl(index, value) {
+            providersData[index].base_url = value;
+        }
+
+        function addKey(pIndex) {
+            if (!providersData[pIndex].keys) providersData[pIndex].keys = [];
+            providersData[pIndex].keys.push('');
+            renderProviders();
+        }
+
+        function removeKey(pIndex, kIndex) {
+            providersData[pIndex].keys.splice(kIndex, 1);
+            renderProviders();
+        }
+
+        function updateKey(pIndex, kIndex, value) {
+            providersData[pIndex].keys[kIndex] = value;
+        }
+
         // 打开设置
         async function openSettings() {
             const modal = document.getElementById('settingsModal');
@@ -1300,6 +1460,9 @@
                     document.getElementById('comfyuiBaseUrl').value = data.data.comfyui_base_url || '';
                     document.getElementById('comfyuiAutoRoute').checked = data.data.comfyui_auto_route || false;
                     document.getElementById('comfyuiDefaultRoute').value = data.data.comfyui_default_route || 'novelai';
+                    
+                    providersData = data.data.novel_ai_providers || [];
+                    renderProviders();
                 }
             } catch (error) {
                 console.error('获取配置失败:', error);
@@ -1321,6 +1484,12 @@
             const comfyuiAutoRoute = document.getElementById('comfyuiAutoRoute').checked;
             const comfyuiDefaultRoute = document.getElementById('comfyuiDefaultRoute').value;
             
+            // 清理空的 key
+            const cleanProviders = providersData.map(p => ({
+                ...p,
+                keys: (p.keys || []).filter(k => k.trim() !== '')
+            })).filter(p => p.name.trim() !== '');
+
             try {
                 const response = await fetch(`${API_BASE}/api/config`, {
                     method: 'POST',
@@ -1329,6 +1498,7 @@
                         'Authorization': `Bearer ${currentToken}`
                     },
                     body: JSON.stringify({
+                        novel_ai_providers: cleanProviders,
                         novel_ai_base_url: url,
                         novel_ai_key: key,
                         novel_ai_a1111_path: path,

@@ -156,9 +156,16 @@ func A1111Txt2Img(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	// 8. 路由到对应的模型生成函数 (ComfyUI / V3 / V4)
 	if cfg.ComfyUI.BaseURL != "" {
 		shouldRouteToComfyUI := false
+		
+		// 移除可能存在的 provider 前缀进行匹配检查
+		checkModelName := modelName
+		if dotIdx := strings.Index(checkModelName, "."); dotIdx != -1 {
+			checkModelName = checkModelName[dotIdx+1:]
+		}
+
 		if cfg.ComfyUI.AutoRoute {
 			// 开启自动路由：非 nai-diffusion- 开头的尝试走 ComfyUI
-			if !strings.HasPrefix(modelName, "nai-diffusion-") {
+			if !strings.HasPrefix(checkModelName, "nai-diffusion-") {
 				shouldRouteToComfyUI = true
 			}
 		} else {
@@ -169,8 +176,10 @@ func A1111Txt2Img(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 		}
 
 		if shouldRouteToComfyUI {
+			log.Printf("A1111: Routing request to ComfyUI (URL: %s, Model: %s)", cfg.ComfyUI.BaseURL, modelName)
 			images, err := models.GenerateWithComfyUI(modelName, &tempCfg, userInput, base64String, width, height, seed)
 			if err == nil && len(images) > 0 {
+				log.Printf("A1111: ComfyUI generation successful, returned %d images", len(images))
 				w.Header().Set("Content-Type", "application/json")
 				json.NewEncoder(w).Encode(map[string]interface{}{
 					"images": images,
@@ -186,12 +195,22 @@ func A1111Txt2Img(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 		}
 	}
 
-	if strings.Contains(modelName, "-3") {
-		log.Printf("A1111: Routing model '%s' to V3 logic", modelName)
-		models.Nai3WithFormatAndSize(w, r, compatibleReq, seed, base64String, tempCfg.NovelAI.Key, &tempCfg, userInput, width, height, isDallRequest)
+	// 走 NAI 逻辑
+	baseURL, key, realModelName := models.RouteModel(&tempCfg, modelName)
+	
+	// 临时修改 tempCfg 中的 BaseURL 和 Key 以便底层函数使用
+	tempCfg.NovelAI.BaseURL = baseURL
+	tempCfg.NovelAI.Key = key
+	
+	// 更新 compatibleReq 中的模型名称为去掉 provider 前缀的真实模型名
+	compatibleReq.Model = realModelName
+
+	if strings.Contains(realModelName, "-3") {
+		log.Printf("A1111: Routing model '%s' to V3 logic", realModelName)
+		models.Nai3WithFormatAndSize(w, r, compatibleReq, seed, base64String, key, &tempCfg, userInput, width, height, isDallRequest)
 	} else {
-		log.Printf("A1111: Routing model '%s' to V4/Latest logic", modelName)
-		models.Nai4WithFormatAndSize(w, r, compatibleReq, seed, base64String, tempCfg.NovelAI.Key, &tempCfg, userInput, nil, width, height, isDallRequest)
+		log.Printf("A1111: Routing model '%s' to V4/Latest logic", realModelName)
+		models.Nai4WithFormatAndSize(w, r, compatibleReq, seed, base64String, key, &tempCfg, userInput, nil, width, height, isDallRequest)
 	}
 }
 

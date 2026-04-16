@@ -113,7 +113,7 @@ func Completions(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	shouldRouteToComfyUI := false
 	if cfg.ComfyUI.BaseURL != "" {
 		if cfg.ComfyUI.AutoRoute {
-			if !strings.HasPrefix(req.Model, "nai-diffusion-") {
+			if !strings.Contains(req.Model, "nai-diffusion-") {
 				shouldRouteToComfyUI = true
 			}
 		} else {
@@ -194,13 +194,35 @@ func Completions(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	}
 
 	// 走 NAI 逻辑
-	switch req.Model {
+	baseURL, key, realModelName := models.RouteModel(cfg, req.Model)
+	
+	// 临时修改 cfg 中的 BaseURL 和 Key 以便底层函数使用
+	originalBaseURL := cfg.NovelAI.BaseURL
+	originalKey := cfg.NovelAI.Key
+	cfg.NovelAI.BaseURL = baseURL
+	cfg.NovelAI.Key = key
+	
+	// 确保恢复原始配置
+	defer func() {
+		cfg.NovelAI.BaseURL = originalBaseURL
+		cfg.NovelAI.Key = originalKey
+	}()
+
+	// 如果 authHeader 是默认的，也更新它
+	if authHeader == originalKey {
+		authHeader = key
+	}
+	
+	// 更新 req 中的模型名称为去掉 provider 前缀的真实模型名
+	req.Model = realModelName
+
+	switch realModelName {
 	case "nai-diffusion-3", "nai-diffusion-furry-3":
 		models.Nai3(w, r, req, randomSeed, base64String, authHeader, cfg, userInput)
 	case "nai-diffusion-4-full", "nai-diffusion-4-curated-preview", "nai-diffusion-4-5-curated", "nai-diffusion-4-5-full":
 		models.Nai4(w, r, req, randomSeed, base64String, authHeader, cfg, userInput, nil)
 	default:
-		if strings.Contains(req.Model, "-3") {
+		if strings.Contains(realModelName, "-3") {
 			models.Nai3(w, r, req, randomSeed, base64String, authHeader, cfg, userInput)
 		} else {
 			models.Nai4(w, r, req, randomSeed, base64String, authHeader, cfg, userInput, nil)

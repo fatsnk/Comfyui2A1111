@@ -143,15 +143,18 @@ func GenerateWithComfyUI(
 	}
 
 	clientID := uuid.New().String()
+	log.Printf("ComfyUI: Queueing prompt for model %s with client ID %s", modelName, clientID)
 	res, err := client.QueuePrompt(prompt, clientID)
 	if err != nil {
 		return nil, fmt.Errorf("ComfyUI queue failed: %v", err)
 	}
+	log.Printf("ComfyUI: Prompt queued successfully, Prompt ID: %s. Waiting for completion...", res.PromptID)
 
 	history, err := client.WaitForCompletion(res.PromptID, clientID, 5*time.Minute)
 	if err != nil {
 		return nil, fmt.Errorf("ComfyUI wait failed: %v", err)
 	}
+	log.Printf("ComfyUI: Generation completed for Prompt ID: %s. Extracting images...", res.PromptID)
 
 	// Extract output images
 	var images []string
@@ -166,10 +169,15 @@ func GenerateWithComfyUI(
 							folderType, _ := imgMap["type"].(string)
 							
 							if filename != "" {
+								imgURL := fmt.Sprintf("%s/view?filename=%s&subfolder=%s&type=%s", cfg.ComfyUI.BaseURL, filename, subfolder, folderType)
+								log.Printf("ComfyUI: Downloading output image: %s", imgURL)
 								imgData, err := client.DownloadImage(filename, subfolder, folderType)
 								if err == nil {
 									b64 := base64.StdEncoding.EncodeToString(imgData)
 									images = append(images, b64)
+									log.Printf("ComfyUI: Successfully downloaded and encoded image %s", filename)
+								} else {
+									log.Printf("ComfyUI: Failed to download image %s: %v", filename, err)
 								}
 							}
 						}

@@ -248,8 +248,20 @@ func Nai3WithFormatAndSize(w http.ResponseWriter, r *http.Request, req config.Ch
 					"parameters": map[string]interface{}{},
 					"info":       "{}",
 				}
+				
+				// 记录返回日志，截断 base64
+				logResp := map[string]interface{}{
+					"images": []string{fmt.Sprintf("<base64 data, length: %d>", len(base64Image))},
+					"parameters": a1111Response["parameters"],
+					"info":       a1111Response["info"],
+				}
+				logBytes, _ := json.Marshal(logResp)
+				log.Printf("Sending A1111 response: %s", string(logBytes))
+
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(a1111Response)
+				if err := json.NewEncoder(w).Encode(a1111Response); err != nil {
+					log.Printf("A1111 Response Write Error: %v", err)
+				}
 			} else if isDallRequest {
 				// DALL-E 格式响应
 				dallResponse := map[string]interface{}{

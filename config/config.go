@@ -12,6 +12,13 @@ type Message struct {
 	Content string `json:"content"`
 }
 
+// Provider 定义模型提供者配置
+type Provider struct {
+	Name    string   `mapstructure:"name" yaml:"name" json:"name"`
+	BaseURL string   `mapstructure:"base_url" yaml:"base_url" json:"base_url"`
+	Keys    []string `mapstructure:"keys" yaml:"keys" json:"keys"`
+}
+
 type Config struct {
 	// 启动端口号变量
 	Server struct {
@@ -112,10 +119,11 @@ type Config struct {
 
 	// NovelAI 全局配置
 	NovelAI struct {
-		BaseURL     string `mapstructure:"base_url" yaml:"base_url"`
-		Key         string `mapstructure:"key" yaml:"key"`
-		A1111Path   string `mapstructure:"a1111_path" yaml:"a1111_path"`
-		A1111NoSave bool   `mapstructure:"a1111_no_save" yaml:"a1111_no_save"`
+		Providers   []Provider `mapstructure:"providers" yaml:"providers"`
+		BaseURL     string     `mapstructure:"base_url" yaml:"base_url"`
+		Key         string     `mapstructure:"key" yaml:"key"`
+		A1111Path   string     `mapstructure:"a1111_path" yaml:"a1111_path"`
+		A1111NoSave bool       `mapstructure:"a1111_no_save" yaml:"a1111_no_save"`
 	} `mapstructure:"novel_ai" yaml:"novel_ai"`
 
 	// ComfyUI 配置

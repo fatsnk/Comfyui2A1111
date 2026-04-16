@@ -19,24 +19,26 @@ type ConfigResponse struct {
 }
 
 type ConfigData struct {
-	NovelAIBaseURL      string `json:"novel_ai_base_url"`
-	NovelAIKey          string `json:"novel_ai_key"`
-	NovelAIA1111Path    string `json:"novel_ai_a1111_path"`
-	NovelAIA1111NoSave  bool   `json:"novel_ai_a1111_no_save"`
-	ComfyUIBaseURL      string `json:"comfyui_base_url"`
-	ComfyUIAutoRoute    bool   `json:"comfyui_auto_route"`
-	ComfyUIDefaultRoute string `json:"comfyui_default_route"`
+	NovelAIProviders    []config.Provider `json:"novel_ai_providers"`
+	NovelAIBaseURL      string            `json:"novel_ai_base_url"`
+	NovelAIKey          string            `json:"novel_ai_key"`
+	NovelAIA1111Path    string            `json:"novel_ai_a1111_path"`
+	NovelAIA1111NoSave  bool              `json:"novel_ai_a1111_no_save"`
+	ComfyUIBaseURL      string            `json:"comfyui_base_url"`
+	ComfyUIAutoRoute    bool              `json:"comfyui_auto_route"`
+	ComfyUIDefaultRoute string            `json:"comfyui_default_route"`
 }
 
 // ConfigUpdateRequest 配置更新请求
 type ConfigUpdateRequest struct {
-	NovelAIBaseURL      string `json:"novel_ai_base_url"`
-	NovelAIKey          string `json:"novel_ai_key"`
-	NovelAIA1111Path    string `json:"novel_ai_a1111_path"`
-	NovelAIA1111NoSave  bool   `json:"novel_ai_a1111_no_save"`
-	ComfyUIBaseURL      string `json:"comfyui_base_url"`
-	ComfyUIAutoRoute    bool   `json:"comfyui_auto_route"`
-	ComfyUIDefaultRoute string `json:"comfyui_default_route"`
+	NovelAIProviders    []config.Provider `json:"novel_ai_providers"`
+	NovelAIBaseURL      string            `json:"novel_ai_base_url"`
+	NovelAIKey          string            `json:"novel_ai_key"`
+	NovelAIA1111Path    string            `json:"novel_ai_a1111_path"`
+	NovelAIA1111NoSave  bool              `json:"novel_ai_a1111_no_save"`
+	ComfyUIBaseURL      string            `json:"comfyui_base_url"`
+	ComfyUIAutoRoute    bool              `json:"comfyui_auto_route"`
+	ComfyUIDefaultRoute string            `json:"comfyui_default_route"`
 }
 
 // GetConfig 获取配置API
@@ -67,6 +69,7 @@ func GetConfig(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	response := ConfigResponse{
 		Success: true,
 		Data: ConfigData{
+			NovelAIProviders:    cfg.NovelAI.Providers,
 			NovelAIBaseURL:      cfg.NovelAI.BaseURL,
 			NovelAIKey:          cfg.NovelAI.Key,
 			NovelAIA1111Path:    cfg.NovelAI.A1111Path,
@@ -115,6 +118,7 @@ func UpdateConfig(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	}
 
 	// 更新内存中的配置
+	cfg.NovelAI.Providers = req.NovelAIProviders
 	cfg.NovelAI.BaseURL = req.NovelAIBaseURL
 	cfg.NovelAI.Key = req.NovelAIKey
 	cfg.NovelAI.A1111Path = strings.Trim(req.NovelAIA1111Path, "/")
