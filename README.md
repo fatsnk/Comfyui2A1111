@@ -39,7 +39,7 @@
 5.配置comfyui工作流。在logs页面中上传你的工作流，然后点击参数配置按钮，在界面上配置节点的功能（选择正面/负面提示词、生成参数等对应的节点）。
 配置好后，在右上角设置中选择始终走本地（comfyui）或始终走云端（novelAI），然后就可用使用了。
 6.一些说明
-/v1/images/generations（DALL-E）兼容接口使用非流式，chat/completions（openai兼容格式）使用流式，注意apikey填写a1111_path的值（即设置页面中的“A1111 接口安全子路径”），stable diffusion（A1111）兼容接口地址则为“http://你的服务所部署的机器的ip:你设置的端口号/你填写的子路径”
+/v1/images/generations（DALL-E）兼容接口必须使用非流式解析，注意apikey填写a1111_path的值（即设置页面中的“A1111 接口安全子路径”），stable diffusion（A1111）兼容接口地址则为“http://你的服务所部署的机器的ip:你设置的端口号/你填写的子路径”
 
 ```
 
