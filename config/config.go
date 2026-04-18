@@ -1,15 +1,64 @@
 package config
 
+import "encoding/json"
+
 // ChatRequest 定义请求结构体
 type ChatRequest struct {
 	Authorization string    `json:"Authorization"`
 	Messages      []Message `json:"messages"`
 	Model         string    `json:"model"`
+	Stream        bool      `json:"stream"`
 }
 
 type Message struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
+}
+
+// UnmarshalJSON 自定义反序列化，支持 content 为 string 或 array 格式
+func (m *Message) UnmarshalJSON(data []byte) error {
+	// 先尝试用一个临时结构体解析
+	type Alias struct {
+		Role    string          `json:"role"`
+		Content json.RawMessage `json:"content"`
+	}
+	var alias Alias
+	if err := json.Unmarshal(data, &alias); err != nil {
+		return err
+	}
+	m.Role = alias.Role
+
+	// 尝试解析为字符串
+	var contentStr string
+	if err := json.Unmarshal(alias.Content, &contentStr); err == nil {
+		m.Content = contentStr
+		return nil
+	}
+
+	// 尝试解析为数组（多模态格式）
+	var contentArr []map[string]interface{}
+	if err := json.Unmarshal(alias.Content, &contentArr); err == nil {
+		// 提取所有 text 类型的内容拼接
+		var texts []string
+		for _, item := range contentArr {
+			if t, ok := item["type"].(string); ok && t == "text" {
+				if text, ok := item["text"].(string); ok {
+					texts = append(texts, text)
+				}
+			}
+		}
+		if len(texts) > 0 {
+			m.Content = texts[0]
+			for i := 1; i < len(texts); i++ {
+				m.Content += "\n" + texts[i]
+			}
+		}
+		return nil
+	}
+
+	// 都解析不了，把原始内容当字符串用
+	m.Content = string(alias.Content)
+	return nil
 }
 
 // Provider 定义模型提供者配置

@@ -28,14 +28,14 @@ func min(a, b int) int {
 }
 
 func Nai3(w http.ResponseWriter, r *http.Request, req config.ChatRequest, randomSeed int, base64String string, authHeader string, cfg *config.Config, userInput string) {
-	Nai3WithFormat(w, r, req, randomSeed, base64String, authHeader, cfg, userInput, false)
+	Nai3WithFormat(w, r, req, randomSeed, base64String, authHeader, cfg, userInput, false, "")
 }
 
-func Nai3WithFormat(w http.ResponseWriter, r *http.Request, req config.ChatRequest, randomSeed int, base64String string, authHeader string, cfg *config.Config, userInput string, isDallRequest bool) {
-	Nai3WithFormatAndSize(w, r, req, randomSeed, base64String, authHeader, cfg, userInput, cfg.Parameters.Width, cfg.Parameters.Height, isDallRequest)
+func Nai3WithFormat(w http.ResponseWriter, r *http.Request, req config.ChatRequest, randomSeed int, base64String string, authHeader string, cfg *config.Config, userInput string, isDallRequest bool, responseFormat string) {
+	Nai3WithFormatAndSize(w, r, req, randomSeed, base64String, authHeader, cfg, userInput, cfg.Parameters.Width, cfg.Parameters.Height, isDallRequest, responseFormat)
 }
 
-func Nai3WithFormatAndSize(w http.ResponseWriter, r *http.Request, req config.ChatRequest, randomSeed int, base64String string, authHeader string, cfg *config.Config, userInput string, width int, height int, isDallRequest bool) {
+func Nai3WithFormatAndSize(w http.ResponseWriter, r *http.Request, req config.ChatRequest, randomSeed int, base64String string, authHeader string, cfg *config.Config, userInput string, width int, height int, isDallRequest bool, responseFormat ...string) {
 	// 请求连接
 	apiURL := cfg.NovelAI.BaseURL
 	if apiURL == "" {
@@ -263,48 +263,88 @@ func Nai3WithFormatAndSize(w http.ResponseWriter, r *http.Request, req config.Ch
 					log.Printf("A1111 Response Write Error: %v", err)
 				}
 			} else if isDallRequest {
-				// DALL-E 格式响应
-				dallResponse := map[string]interface{}{
-					"data": []map[string]interface{}{
-						{
-							"url": outputs,
-						},
-					},
-					"usage": map[string]interface{}{
-						"prompt_tokens":     0,
-						"completion_tokens": 0,
-						"total_tokens":      16384,
-						"prompt_tokens_details": map[string]interface{}{
-							"cached_tokens_details": map[string]interface{}{},
-						},
-						"completion_tokens_details": map[string]interface{}{},
-						"output_tokens":             16384,
-					},
-					"created": timestamp,
-				}
+					// DALL-E 格式响应
+					// 判断是否需要返回 b64_json 格式
+					dallFormat := ""
+					if len(responseFormat) > 0 {
+						dallFormat = responseFormat[0]
+					}
+	
+					dallImageItem := map[string]interface{}{
+						"revised_prompt": userInput,
+					}
+					if dallFormat == "b64_json" {
+						dallImageItem["b64_json"] = base64.StdEncoding.EncodeToString(imageData)
+					} else {
+						dallImageItem["url"] = outputs
+					}
+	
+					dallResponse := map[string]interface{}{
+						"data":    []map[string]interface{}{dallImageItem},
+						"created": timestamp,
+					}
 
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(dallResponse)
+					// 打印日志，隐藏 base64 数据
+					logImageItem := map[string]interface{}{
+						"revised_prompt": userInput,
+					}
+					if dallFormat == "b64_json" {
+						logImageItem["b64_json"] = fmt.Sprintf("<base64 data, length: %d>", len(imageData))
+					} else {
+						logImageItem["url"] = outputs
+					}
+					logResponse := map[string]interface{}{
+						"data":    []map[string]interface{}{logImageItem},
+						"created": timestamp,
+					}
+					logBytes, _ := json.Marshal(logResponse)
+					log.Printf("Sending DALL-E response: %s", string(logBytes))
+	
+					w.Header().Set("Content-Type", "application/json")
+					// 使用 json.Marshal 默认生成单行 JSON
+					jsonBytes, err := json.Marshal(dallResponse)
+					if err != nil {
+						log.Printf("Failed to marshal DALL-E response: %v", err)
+						http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+						return
+					}
+					w.Write(jsonBytes)
 			} else {
-				// 原有的流式聊天响应格式
-				sseResponse := fmt.Sprintf(
-					"data: {\"id\":\"%s\",\"object\":\"chat.completion.chunk\",\"created\":%d,\"model\":\"%s\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"%s\"},\"logprobs\":null,\"finish_reason\":null}]}\n\n",
-					"chatcmpl-"+fmt.Sprintf("%d", timestamp), // 生成一个唯一的 id
-					timestamp,
-					req.Model,
-					publicLink,
-				)
+				// 修正 JSON 格式，确保 content 字段的值被正确转义
+				contentBytes, _ := json.Marshal(publicLink)
 
-				w.Header().Set("Content-Type", "text/event-stream")
-				w.Write([]byte(sseResponse))
-				w.(http.Flusher).Flush() // 刷新响应缓冲区到客户端
+				if req.Stream {
+					// 原有的流式聊天响应格式
+					sseResponse := fmt.Sprintf(
+						"data: {\"id\":\"%s\",\"object\":\"chat.completion.chunk\",\"created\":%d,\"model\":\"%s\",\"choices\":[{\"index\":0,\"delta\":{\"content\":%s},\"logprobs\":null,\"finish_reason\":null}]}\n\n",
+						"chatcmpl-"+fmt.Sprintf("%d", timestamp), // 生成一个唯一的 id
+						timestamp,
+						req.Model,
+						string(contentBytes),
+					)
+
+					w.Header().Set("Content-Type", "text/event-stream")
+					w.Write([]byte(sseResponse))
+					w.(http.Flusher).Flush() // 刷新响应缓冲区到客户端
+				} else {
+					// 非流式 JSON 响应格式
+					jsonResponse := fmt.Sprintf(
+						"{\"id\":\"%s\",\"object\":\"chat.completion\",\"created\":%d,\"model\":\"%s\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":%s},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"total_tokens\":0}}\n",
+						"chatcmpl-"+fmt.Sprintf("%d", timestamp),
+						timestamp,
+						req.Model,
+						string(contentBytes),
+					)
+					w.Header().Set("Content-Type", "application/json")
+					w.Write([]byte(jsonResponse))
+				}
 			}
 			break
 		}
 	}
 
-	// 如果不是 DALL-E 请求，则结束流式输出
-	if !isDallRequest {
+	// 如果不是 DALL-E 请求，且是流式请求，则结束流式输出
+	if !isDallRequest && req.Stream {
 		w.Write([]byte("event: end\n\n"))
 		w.(http.Flusher).Flush() // 刷新最后一条消息
 	}

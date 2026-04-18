@@ -226,14 +226,14 @@ func Generations(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 
 	switch realModelName {
 	case "nai-diffusion-3", "nai-diffusion-furry-3":
-		models.Nai3WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, width, height, isDallRequest)
+		models.Nai3WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, width, height, isDallRequest, req.ResponseFormat)
 	case "nai-diffusion-4-full", "nai-diffusion-4-curated-preview", "nai-diffusion-4-5-curated", "nai-diffusion-4-5-full":
-		models.Nai4WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, nil, width, height, isDallRequest)
+		models.Nai4WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, nil, width, height, isDallRequest, req.ResponseFormat)
 	default:
 		if strings.Contains(realModelName, "-3") {
-			models.Nai3WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, width, height, isDallRequest)
+			models.Nai3WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, width, height, isDallRequest, req.ResponseFormat)
 		} else {
-			models.Nai4WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, nil, width, height, isDallRequest)
+			models.Nai4WithFormatAndSize(w, r, compatibleReq, randomSeed, base64String, authHeader, cfg, userInput, nil, width, height, isDallRequest, req.ResponseFormat)
 		}
 	}
 }
@@ -271,8 +271,33 @@ func sendDallEResponse(w http.ResponseWriter, r *http.Request, cfg *config.Confi
 			}
 		}
 	}
+
+	// 打印日志，隐藏 base64 数据
+	logResponse := GenerationResponse{
+		Created: response.Created,
+		Data:    make([]GenerationImageData, len(response.Data)),
+	}
+	for i, d := range response.Data {
+		logResponse.Data[i] = d
+		if d.B64JSON != "" {
+			logResponse.Data[i].B64JSON = fmt.Sprintf("<base64 data, length: %d>", len(d.B64JSON))
+		}
+		if strings.HasPrefix(d.URL, "data:image/png;base64,") {
+			logResponse.Data[i].URL = fmt.Sprintf("<data URI, length: %d>", len(d.URL))
+		}
+	}
+	logBytes, _ := json.Marshal(logResponse)
+	log.Printf("Sending DALL-E response: %s", string(logBytes))
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	// 使用 json.Marshal 默认生成单行 JSON
+	jsonBytes, err := json.Marshal(response)
+	if err != nil {
+		log.Printf("Failed to marshal DALL-E response: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(jsonBytes)
 }
 
 // GenerationsJSON 处理 OpenAI DALL-E 格式的画图请求并返回 JSON 响应 (非流式)

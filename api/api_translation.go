@@ -10,10 +10,16 @@ import (
 	"novel-api/config"
 )
 
+// TranslationMessage 翻译请求中的消息结构（content 始终为字符串）
+type TranslationMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
 // TranslationRequest 定义翻译请求结构体
 type TranslationRequest struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
+	Model    string               `json:"model"`
+	Messages []TranslationMessage `json:"messages"`
 }
 
 // TranslationResponse 定义翻译响应结构体
@@ -50,7 +56,7 @@ func TranslateText(text string, cfg *config.Config) (string, error) {
 	// 构建翻译请求
 	translateReq := TranslationRequest{
 		Model: cfg.Translation.Model,
-		Messages: []Message{
+		Messages: []TranslationMessage{
 			{
 				Role:    "system",
 				Content: cfg.Translation.Role,

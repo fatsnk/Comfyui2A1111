@@ -16,17 +16,6 @@ import (
 	"time"
 )
 
-// ChatRequest 定义请求结构体
-type ChatRequest struct {
-	Authorization string    `json:"Authorization"`
-	Messages      []Message `json:"messages"`
-	Model         string    `json:"model"`
-}
-
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
 
 // 提取链接的函数
 func extractLinks(userInput string) []string {
@@ -64,6 +53,7 @@ func Completions(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("Failed to decode request body: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	// 获取最后一条用户输入
@@ -176,18 +166,30 @@ func Completions(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 			// 修正 JSON 格式，确保 content 字段的值被正确转义
 			contentBytes, _ := json.Marshal(publicLink)
 			
-			sseResponse := fmt.Sprintf(
-				"data: {\"id\":\"%s\",\"object\":\"chat.completion.chunk\",\"created\":%d,\"model\":\"%s\",\"choices\":[{\"index\":0,\"delta\":{\"content\":%s},\"logprobs\":null,\"finish_reason\":null}]}\n\n",
-				"chatcmpl-"+fmt.Sprintf("%d", timestamp),
-				timestamp,
-				req.Model,
-				string(contentBytes),
-			)
+			if req.Stream {
+				sseResponse := fmt.Sprintf(
+					"data: {\"id\":\"%s\",\"object\":\"chat.completion.chunk\",\"created\":%d,\"model\":\"%s\",\"choices\":[{\"index\":0,\"delta\":{\"content\":%s},\"logprobs\":null,\"finish_reason\":null}]}\n\n",
+					"chatcmpl-"+fmt.Sprintf("%d", timestamp),
+					timestamp,
+					req.Model,
+					string(contentBytes),
+				)
 
-			w.Header().Set("Content-Type", "text/event-stream")
-			w.Write([]byte(sseResponse))
-			w.Write([]byte("event: end\n\n"))
-			w.(http.Flusher).Flush()
+				w.Header().Set("Content-Type", "text/event-stream")
+				w.Write([]byte(sseResponse))
+				w.Write([]byte("event: end\n\n"))
+				w.(http.Flusher).Flush()
+			} else {
+				jsonResponse := fmt.Sprintf(
+					"{\"id\":\"%s\",\"object\":\"chat.completion\",\"created\":%d,\"model\":\"%s\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":%s},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"total_tokens\":0}}\n",
+					"chatcmpl-"+fmt.Sprintf("%d", timestamp),
+					timestamp,
+					req.Model,
+					string(contentBytes),
+				)
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte(jsonResponse))
+			}
 			return
 		}
 		log.Printf("[Completions] ComfyUI generation failed, falling back to NAI: %v", err)
