@@ -14,7 +14,7 @@
 #  ...
   local:
     path: ./images
-    base_url: http://192.168.1.33:8029/images # 这个local中的base_url必须改成你自己机器的局域网ip或公网ip（如果有）或穿透后的域名（如果你设置了内网穿透）
+    base_url: http://192.168.1.3:8029/images # 这个local中的base_url必须改成你自己机器的局域网ip或公网ip（如果有）或穿透后的域名（如果你设置了内网穿透）
 #  ...
   novel_ai: # 这部分是远程novelAI配置，可在web界面设置，这里也可以提前设置。
     base_url: https://xxx.com/ai/generate-image
@@ -22,7 +22,7 @@
     a1111_path: mytestpath # 重要！必须设置，用于A1111的请求路径，同时也作为/v1/images/generations（DALL-E）和chat/completions（openai兼容格式）的api key!比如，默认的服务地址是http://127.0.0.1:8029，那么你的客户端填写的stable diffusion地址就是http://127.0.0.1:8029/mytestpath，如果使用openai兼容格式，那么apikey就要填写mytestpath，所以一定要修改！
     a1111_no_save: true
   comfyui: # 这里是本地comfyui配置，可在web界面中设置。
-    base_url: http://192.168.1.33:8188 # 你的comfyui的地址。comfyui需要开启监听。
+    base_url: http://192.168.1.3:8188 # 你的comfyui的地址。comfyui需要开启监听。
     workflows_dir: ""
     auto_route: false
     default_route: novelai
@@ -39,7 +39,7 @@
 5.配置comfyui工作流。在logs页面中上传你的工作流，然后点击参数配置按钮，在界面上配置节点的功能（选择正面/负面提示词、生成参数等对应的节点）。
 配置好后，在右上角设置中选择始终走本地（comfyui）或始终走云端（novelAI），然后就可用使用了。
 6.一些说明
-/v1/images/generations（DALL-E）兼容接口必须使用非流式解析，注意apikey填写a1111_path的值（即设置页面中的“A1111 接口安全子路径”），stable diffusion（A1111）兼容接口地址则为“http://你的服务所部署的机器的ip:你设置的端口号/你填写的子路径”
+/v1/images/generations（DALL-E）兼容接口必须使用非流式解析，注意apikey填写a1111_path的值（即设置页面中的“A1111 接口安全子路径”），stable diffusion（A1111）兼容接口地址则为“http://你的服务所部署的机器的ip:你设置的端口号/你填写的子路径”，例如http://192.168.1.3:8029/mytestpath
 
 ```
 
